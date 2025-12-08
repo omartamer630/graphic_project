@@ -1,0 +1,178 @@
+#include <GL/gl.h>
+#include <GL/glut.h>
+#include <string>
+#include <cstring>
+
+// Function prototypes
+void InitGraphics(int argc, char *argv[]);
+void SetTransformations();
+void OnDisplay();
+void OnSpecialKeyPress(int key, int x, int y);
+void DrawText(float x, float y, const char *text);
+
+// Color variables
+float colorR = 1.0f;
+float colorG = 0.0f;
+float colorB = 0.0f;
+int currentColorIndex = 0;
+
+// Color presets and names
+struct ColorPreset
+{
+  float r, g, b;
+  const char *name;
+};
+
+ColorPreset colors[] = {
+    {1.0f, 0.0f, 0.0f, "Red"},
+    {0.0f, 1.0f, 0.0f, "Green"},
+    {0.0f, 0.0f, 1.0f, "Blue"},
+    {1.0f, 1.0f, 0.0f, "Yellow"},
+    {1.0f, 0.0f, 1.0f, "Magenta"},
+    {0.0f, 1.0f, 1.0f, "Cyan"},
+    {1.0f, 0.5f, 0.0f, "Orange"},
+    {0.5f, 0.0f, 0.5f, "Purple"},
+    {1.0f, 0.75f, 0.8f, "Pink"},
+    {0.5f, 0.5f, 0.5f, "Gray"}};
+
+const int numColors = sizeof(colors) / sizeof(colors[0]);
+
+int main(int argc, char *argv[])
+{
+  InitGraphics(argc, argv);
+  return 0;
+}
+
+void InitGraphics(int argc, char *argv[])
+{
+  glutInit(&argc, argv);
+  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+  glutInitWindowPosition(100, 100);
+  glutInitWindowSize(800, 600);
+  glutCreateWindow("Color Changer Game - Use Arrow Keys");
+
+  glutDisplayFunc(OnDisplay);
+  glutSpecialFunc(OnSpecialKeyPress);
+  glutIdleFunc(OnDisplay);
+
+  SetTransformations();
+  glutMainLoop();
+}
+
+void SetTransformations()
+{
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D(-100, 100, -100, 100);
+  glMatrixMode(GL_MODELVIEW);
+}
+
+void OnDisplay()
+{
+  glLoadIdentity();
+
+  // Set background color to white
+  glClearColor(1, 1, 1, 1);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  // Draw the colored rectangle
+  glBegin(GL_QUADS);
+  glColor3f(colorR, colorG, colorB);
+  glVertex3f(-60, -40, 0);
+  glVertex3f(60, -40, 0);
+  glVertex3f(60, 40, 0);
+  glVertex3f(-60, 40, 0);
+  glEnd();
+
+  // Draw border for the rectangle
+  glBegin(GL_LINE_LOOP);
+  glColor3f(0, 0, 0);
+  glVertex3f(-60, -40, 0);
+  glVertex3f(60, -40, 0);
+  glVertex3f(60, 40, 0);
+  glVertex3f(-60, 40, 0);
+  glEnd();
+
+  // Draw background box for color name
+  glBegin(GL_QUADS);
+  glColor3f(0.9f, 0.9f, 0.9f);
+  glVertex3f(-40, 55, 0);
+  glVertex3f(40, 55, 0);
+  glVertex3f(40, 70, 0);
+  glVertex3f(-40, 70, 0);
+  glEnd();
+
+  // Draw border for color name box
+  glBegin(GL_LINE_LOOP);
+  glColor3f(0, 0, 0);
+  glVertex3f(-40, 55, 0);
+  glVertex3f(40, 55, 0);
+  glVertex3f(40, 70, 0);
+  glVertex3f(-40, 70, 0);
+  glEnd();
+
+  // Display color name (large and centered)
+  glColor3f(0, 0, 0);
+  float textWidth = strlen(colors[currentColorIndex].name) * 5;
+  DrawText(-textWidth, 60, colors[currentColorIndex].name);
+
+  // Display instructions
+  glColor3f(0, 0, 0);
+  DrawText(-80, -80, "Arrow Keys: Change Color");
+  DrawText(-80, -90, "UP/DOWN: Next/Previous");
+
+  glutSwapBuffers();
+}
+
+void DrawText(float x, float y, const char *text)
+{
+  glRasterPos2f(x, y);
+  for (const char *c = text; *c != '\0'; c++)
+  {
+    glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+  }
+}
+
+void OnSpecialKeyPress(int key, int x, int y)
+{
+  switch (key)
+  {
+  case GLUT_KEY_UP:
+    // Next color
+    currentColorIndex = (currentColorIndex + 1) % numColors;
+    colorR = colors[currentColorIndex].r;
+    colorG = colors[currentColorIndex].g;
+    colorB = colors[currentColorIndex].b;
+    break;
+
+  case GLUT_KEY_DOWN:
+    // Previous color
+    currentColorIndex = (currentColorIndex - 1 + numColors) % numColors;
+    colorR = colors[currentColorIndex].r;
+    colorG = colors[currentColorIndex].g;
+    colorB = colors[currentColorIndex].b;
+    break;
+
+  case GLUT_KEY_RIGHT:
+    // Next color (same as UP)
+    currentColorIndex = (currentColorIndex + 1) % numColors;
+    colorR = colors[currentColorIndex].r;
+    colorG = colors[currentColorIndex].g;
+    colorB = colors[currentColorIndex].b;
+    break;
+
+  case GLUT_KEY_LEFT:
+    // Previous color (same as DOWN)
+    currentColorIndex = (currentColorIndex - 1 + numColors) % numColors;
+    colorR = colors[currentColorIndex].r;
+    colorG = colors[currentColorIndex].g;
+    colorB = colors[currentColorIndex].b;
+    break;
+  }
+
+  glutPostRedisplay();
+}
+
+// Compilation command for Linux:
+// g++ main.cpp -o color_changer -lGL -lGLU -lglut
+// Then run: ./color_changer
