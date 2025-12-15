@@ -1,4 +1,4 @@
-# Complete Documentation: OpenGL Color Changer Game
+# Complete Documentation: OpenGL Color Changer Game with Moving Line
 
 ## Table of Contents
 1. [Header Files](#header-files)
@@ -46,6 +46,27 @@
 - Specifically used for `strlen()` function to calculate text length
 - Needed for centering the color name text
 
+```cpp
+#include <cmath>
+```
+**Purpose:** Includes C math library for mathematical functions.
+- Provides `fabs()` function for absolute value calculations
+- Used for smooth animation calculations
+
+```cpp
+#include <cstdlib>
+```
+**Purpose:** Includes C standard library functions.
+- Provides `rand()` function for random number generation
+- Used to generate random positions for the moving line
+
+```cpp
+#include <ctime>
+```
+**Purpose:** Includes time-related functions.
+- Provides `time()` function to seed random number generator
+- Ensures different random sequences each program run
+
 ---
 
 ## Function Prototypes
@@ -69,6 +90,7 @@ void OnDisplay();
 ```
 **Purpose:** Declares the rendering function called every frame.
 - Draws all graphics elements
+- Handles animation of the moving line
 - Called automatically by GLUT when window needs redrawing
 
 ```cpp
@@ -121,6 +143,35 @@ int currentColorIndex = 0;
 - Index into the `colors[]` array
 - Starts at 0 (first color: Red)
 - Used to cycle through available colors
+
+### Line Animation Variables
+
+```cpp
+float lineProgress = 0.0f;
+```
+**Purpose:** Stores the current horizontal position progress of the moving line.
+- Range: 0.0 (leftmost position) to 1.0 (rightmost position)
+- Initialized to 0.0 (starts at left edge)
+- Updated each frame during animation
+- Interpolates smoothly toward target position
+
+```cpp
+float targetLineProgress = 0.0f;
+```
+**Purpose:** Stores the target horizontal position for the line to move toward.
+- Range: 0.0 to 1.0 (same as lineProgress)
+- Set to new random value when color changes
+- Line animates from `lineProgress` toward this value
+
+```cpp
+const float moveSpeed = 0.05f;
+```
+**Purpose:** Controls the speed of line animation.
+- Value: 0.05 (5% of distance per frame)
+- Lower values = slower, smoother animation
+- Higher values = faster animation
+- `const`: Value cannot be changed during execution
+- Creates smooth interpolation effect
 
 ---
 
@@ -226,6 +277,16 @@ int main(int argc, char* argv[]) {
 - Returns `int` status code to operating system
 
 ```cpp
+    srand(time(NULL));
+```
+**Purpose:** Seeds the random number generator.
+- `time(NULL)`: Gets current time in seconds since epoch
+- `srand()`: Initializes random number generator with this seed
+- Ensures different random numbers each program run
+- Must be called before using `rand()`
+- **New addition:** Required for random line positions
+
+```cpp
     InitGraphics(argc, argv);
 ```
 **Purpose:** Calls the initialization function.
@@ -316,6 +377,7 @@ void InitGraphics(int argc, char* argv[]) {
 - `OnDisplay`: Function to call when no events are being processed
 - Causes continuous rendering (animation loop)
 - Keeps display updated in real-time
+- **Important:** Enables smooth line animation by continuously calling display function
 
 ```cpp
     SetTransformations();
@@ -385,6 +447,7 @@ void OnDisplay() {
 **Purpose:** Main rendering function that draws everything on screen.
 - Called every frame by GLUT
 - All drawing code goes here
+- **Enhanced:** Now handles line animation
 
 ```cpp
     glLoadIdentity();
@@ -393,6 +456,66 @@ void OnDisplay() {
 - Clears any previous transformations
 - Ensures fresh start for each frame
 - Prevents transformation accumulation
+
+### Line Animation Logic
+
+```cpp
+    float diff = targetLineProgress - lineProgress;
+```
+**Purpose:** Calculates the difference between target and current positions.
+- `diff`: Distance the line needs to move
+- Positive value: line needs to move right
+- Negative value: line needs to move left
+- Used to determine animation direction and magnitude
+
+```cpp
+    if (fabs(diff) > 0.01f)
+```
+**Purpose:** Checks if line is far enough from target to continue animating.
+- `fabs()`: Absolute value function (ignores sign)
+- `0.01f`: Threshold distance (1% of total range)
+- If difference is larger than threshold, continue animation
+- Prevents infinite tiny movements when very close to target
+
+```cpp
+    {
+        lineProgress += diff * moveSpeed;
+    }
+```
+**Purpose:** Smoothly moves line toward target.
+- `diff * moveSpeed`: Calculate movement for this frame
+- `moveSpeed` (0.05) means move 5% of remaining distance
+- Creates exponential ease-out effect (slows down as it approaches)
+- Called every frame during animation
+
+```cpp
+    else
+    {
+        lineProgress = targetLineProgress;
+    }
+```
+**Purpose:** Snaps line to exact target when close enough.
+- Prevents endless tiny movements
+- Ensures line reaches exact target position
+- Stops animation when sufficiently close
+
+### Line Position Calculation
+
+```cpp
+    float lineX = -60.0f + (lineProgress * 120.0f);
+```
+**Purpose:** Converts normalized progress (0-1) to actual screen coordinates.
+- `-60.0f`: Starting X position (left edge of rectangle)
+- `lineProgress`: Value from 0.0 to 1.0
+- `120.0f`: Width of rectangle (from -60 to +60)
+- `lineProgress * 120.0f`: Maps 0-1 to 0-120
+- Result: X coordinate from -60 to +60
+- **Example calculations:**
+  - Progress = 0.0 → lineX = -60 (left edge)
+  - Progress = 0.5 → lineX = 0 (center)
+  - Progress = 1.0 → lineX = 60 (right edge)
+
+### Background Setup
 
 ```cpp
     glClearColor(1, 1, 1, 1);
@@ -498,6 +621,62 @@ void OnDisplay() {
     glEnd();
 ```
 **Purpose:** Completes the line loop definition.
+
+### Drawing the Moving Line
+
+```cpp
+    glLineWidth(2.0f);
+```
+**Purpose:** Sets the thickness of lines to be drawn.
+- `2.0f`: Line width in pixels
+- Makes the moving line more visible
+- Default line width is 1.0
+- **New addition:** Makes animated line stand out
+
+```cpp
+    glBegin(GL_LINES);
+```
+**Purpose:** Begins definition of line segments.
+- `GL_LINES`: Each pair of vertices defines a separate line
+- Used for drawing straight lines
+
+```cpp
+    glColor3f(0.0f, 0.0f, 0.0f);
+```
+**Purpose:** Sets line color to black.
+- `0.0f, 0.0f, 0.0f`: Pure black color
+- Creates strong contrast against all background colors
+- Ensures line is always visible
+
+```cpp
+    glVertex2f(lineX, -40.0f);
+```
+**Purpose:** Defines the bottom endpoint of the vertical line.
+- `lineX`: Calculated horizontal position (changes during animation)
+- `-40.0f`: Bottom edge of rectangle (fixed)
+- `glVertex2f`: 2D vertex (no Z coordinate needed)
+
+```cpp
+    glVertex2f(lineX, 40.0f);
+```
+**Purpose:** Defines the top endpoint of the vertical line.
+- `lineX`: Same horizontal position as bottom (creates vertical line)
+- `40.0f`: Top edge of rectangle (fixed)
+- Together with previous vertex, creates a line spanning rectangle height
+
+```cpp
+    glEnd();
+```
+**Purpose:** Completes line drawing.
+- OpenGL draws the line between the two vertices
+
+```cpp
+    glLineWidth(1.0f);
+```
+**Purpose:** Resets line width to default.
+- `1.0f`: Standard line width
+- Good practice to restore default state
+- Prevents affecting other line drawings
 
 ### Drawing Color Name Background Box
 
@@ -605,6 +784,7 @@ void OnDisplay() {
 - Shows the newly drawn frame
 - Required for double buffering
 - Prevents flickering during animation
+- **Critical:** Enables smooth line animation
 
 ---
 
@@ -658,6 +838,7 @@ void OnSpecialKeyPress(int key, int x, int y) {
 **Purpose:** Handles special keyboard input (arrow keys, function keys).
 - `key`: Key code constant (e.g., GLUT_KEY_UP)
 - `x, y`: Mouse position when key was pressed (not used here)
+- **Enhanced:** Now also updates line target position
 
 ```cpp
     switch(key) {
@@ -691,6 +872,16 @@ void OnSpecialKeyPress(int key, int x, int y) {
 - These values will be used in next frame
 
 ```cpp
+            targetLineProgress = (float)(rand() % 100) / 100.0f;
+```
+**Purpose:** Sets new random target position for the moving line.
+- `rand() % 100`: Generates random integer from 0 to 99
+- `(float)`: Casts to floating point
+- `/ 100.0f`: Converts to range 0.0 to 0.99
+- Result: Random position across rectangle width
+- **New addition:** Animates line to new position on color change
+
+```cpp
             break;
 ```
 **Purpose:** Exits the switch statement.
@@ -715,19 +906,27 @@ void OnSpecialKeyPress(int key, int x, int y) {
             colorR = colors[currentColorIndex].r;
             colorG = colors[currentColorIndex].g;
             colorB = colors[currentColorIndex].b;
+```
+**Purpose:** Updates color values for previous color.
+
+```cpp
+            targetLineProgress = (float)(rand() % 100) / 100.0f;
+```
+**Purpose:** Generates new random target for line animation.
+- Same logic as UP arrow
+- Creates visual feedback for color change
+
+```cpp
             break;
 ```
-**Purpose:** Same as UP handler - loads new color values.
 
 ### RIGHT Arrow Handler
 
 ```cpp
         case GLUT_KEY_RIGHT:
-            // Next color (same as UP)
 ```
 **Purpose:** Makes RIGHT arrow do same as UP arrow.
 - Comment explains behavior
-- Exact same code as UP arrow case
 - Provides alternative control scheme
 
 ```cpp
@@ -735,14 +934,17 @@ void OnSpecialKeyPress(int key, int x, int y) {
             colorR = colors[currentColorIndex].r;
             colorG = colors[currentColorIndex].g;
             colorB = colors[currentColorIndex].b;
+            targetLineProgress = (float)(rand() % 100) / 100.0f;
             break;
 ```
+**Purpose:** Identical to UP arrow behavior.
+- Advances to next color
+- Updates line target position
 
 ### LEFT Arrow Handler
 
 ```cpp
         case GLUT_KEY_LEFT:
-            // Previous color (same as DOWN)
 ```
 **Purpose:** Makes LEFT arrow do same as DOWN arrow.
 - Provides intuitive horizontal navigation
@@ -752,8 +954,12 @@ void OnSpecialKeyPress(int key, int x, int y) {
             colorR = colors[currentColorIndex].r;
             colorG = colors[currentColorIndex].g;
             colorB = colors[currentColorIndex].b;
+            targetLineProgress = (float)(rand() % 100) / 100.0f;
             break;
 ```
+**Purpose:** Identical to DOWN arrow behavior.
+- Moves to previous color
+- Updates line target position
 
 ### End of Handler
 
@@ -769,7 +975,7 @@ void OnSpecialKeyPress(int key, int x, int y) {
 **Purpose:** Requests window redraw.
 - `glutPostRedisplay()`: Marks window for redisplay
 - Causes `OnDisplay()` to be called
-- Updates screen with new color
+- Updates screen with new color and line position
 - Efficient: only redraws when needed
 
 ---
