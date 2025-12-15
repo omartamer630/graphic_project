@@ -1,7 +1,3 @@
-#pragma comment(lib, "opengl32.lib")
-#pragma comment(lib, "glu32.lib")
-#pragma comment(lib, "glut32.lib")
-
 #include <GL/gl.h>
 #include <GL/glut.h>
 #include <string>
