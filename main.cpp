@@ -1,7 +1,14 @@
+#pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "glu32.lib")
+#pragma comment(lib, "glut32.lib")
+
 #include <GL/gl.h>
 #include <GL/glut.h>
 #include <string>
 #include <cstring>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
 
 // Function prototypes
 void InitGraphics(int argc, char *argv[]);
@@ -15,6 +22,11 @@ float colorR = 1.0f;
 float colorG = 0.0f;
 float colorB = 0.0f;
 int currentColorIndex = 0;
+
+// Line position variables
+float lineProgress = 0.0f;
+float targetLineProgress = 0.0f;
+const float moveSpeed = 0.05f;
 
 // Color presets and names
 struct ColorPreset
@@ -39,6 +51,7 @@ const int numColors = sizeof(colors) / sizeof(colors[0]);
 
 int main(int argc, char *argv[])
 {
+  srand(time(NULL));
   InitGraphics(argc, argv);
   return 0;
 }
@@ -71,6 +84,20 @@ void OnDisplay()
 {
   glLoadIdentity();
 
+  // Smoothly move line progress towards target
+  float diff = targetLineProgress - lineProgress;
+  if (fabs(diff) > 0.01f)
+  {
+    lineProgress += diff * moveSpeed;
+  }
+  else
+  {
+    lineProgress = targetLineProgress;
+  }
+
+  // Calculate horizontal line position (moves left to right across rectangle)
+  float lineX = -60.0f + (lineProgress * 120.0f); // Maps 0-1 to -60 to +60
+
   // Set background color to white
   glClearColor(1, 1, 1, 1);
   glClear(GL_COLOR_BUFFER_BIT);
@@ -92,6 +119,15 @@ void OnDisplay()
   glVertex3f(60, 40, 0);
   glVertex3f(-60, 40, 0);
   glEnd();
+
+  // Draw the moving vertical line (horizontal movement, vertical orientation)
+  glLineWidth(2.0f);
+  glBegin(GL_LINES);
+  glColor3f(0.0f, 0.0f, 0.0f); // Black line
+  glVertex2f(lineX, -40.0f); // Bottom of rectangle
+  glVertex2f(lineX, 40.0f);  // Top of rectangle
+  glEnd();
+  glLineWidth(1.0f);
 
   // Draw background box for color name
   glBegin(GL_QUADS);
@@ -143,6 +179,8 @@ void OnSpecialKeyPress(int key, int x, int y)
     colorR = colors[currentColorIndex].r;
     colorG = colors[currentColorIndex].g;
     colorB = colors[currentColorIndex].b;
+    // Move line to new random position
+    targetLineProgress = (float)(rand() % 100) / 100.0f;
     break;
 
   case GLUT_KEY_DOWN:
@@ -151,6 +189,8 @@ void OnSpecialKeyPress(int key, int x, int y)
     colorR = colors[currentColorIndex].r;
     colorG = colors[currentColorIndex].g;
     colorB = colors[currentColorIndex].b;
+    // Move line to new random position
+    targetLineProgress = (float)(rand() % 100) / 100.0f;
     break;
 
   case GLUT_KEY_RIGHT:
@@ -159,6 +199,8 @@ void OnSpecialKeyPress(int key, int x, int y)
     colorR = colors[currentColorIndex].r;
     colorG = colors[currentColorIndex].g;
     colorB = colors[currentColorIndex].b;
+    // Move line to new random position
+    targetLineProgress = (float)(rand() % 100) / 100.0f;
     break;
 
   case GLUT_KEY_LEFT:
@@ -167,6 +209,8 @@ void OnSpecialKeyPress(int key, int x, int y)
     colorR = colors[currentColorIndex].r;
     colorG = colors[currentColorIndex].g;
     colorB = colors[currentColorIndex].b;
+    // Move line to new random position
+    targetLineProgress = (float)(rand() % 100) / 100.0f;
     break;
   }
 
