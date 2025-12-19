@@ -49,25 +49,29 @@ int main(int argc, char *argv[])
 {
   srand(time(NULL));
   InitGraphics(argc, argv);
+  glutMainLoop(); // Start the main loop
+
   return 0;
 }
 
+// setup window and callbacks
 void InitGraphics(int argc, char *argv[])
 {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
   glutInitWindowPosition(100, 100);
   glutInitWindowSize(800, 600);
-  glutCreateWindow("Color Changer Game - Use Arrow Keys");
+  glutCreateWindow("Color Changer Game - Use Arrow Keys"); // title 
 
   glutDisplayFunc(OnDisplay);
   glutSpecialFunc(OnSpecialKeyPress);
   glutIdleFunc(OnDisplay);
 
   SetTransformations();
-  glutMainLoop();
 }
 
+
+// defines coordinate system
 void SetTransformations()
 {
   glMatrixMode(GL_PROJECTION);
@@ -76,6 +80,7 @@ void SetTransformations()
   glMatrixMode(GL_MODELVIEW);
 }
 
+// contiuously called to update display
 void OnDisplay()
 {
   glLoadIdentity();
@@ -116,7 +121,7 @@ void OnDisplay()
   glVertex3f(-60, 40, 0);
   glEnd();
 
-  // Draw the moving vertical line (horizontal movement, vertical orientation)
+  // Draw the moving vertical line (horizontal movement, vertical orientation) 
   glLineWidth(2.0f);
   glBegin(GL_LINES);
   glColor3f(0.0f, 0.0f, 0.0f); // Black line
@@ -165,6 +170,7 @@ void DrawText(float x, float y, const char *text)
   }
 }
 
+// special
 void OnSpecialKeyPress(int key, int x, int y)
 {
   switch (key)
@@ -210,7 +216,7 @@ void OnSpecialKeyPress(int key, int x, int y)
     break;
   }
 
-  glutPostRedisplay();
+  glutPostRedisplay(); // screen update 
 }
 
 // Compilation command for Linux:
