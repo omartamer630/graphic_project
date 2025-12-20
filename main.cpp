@@ -58,10 +58,10 @@ int main(int argc, char *argv[])
 void InitGraphics(int argc, char *argv[])
 {
   glutInit(&argc, argv);
-  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-  glutInitWindowPosition(100, 100);
+  glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
+  glutInitWindowPosition(500, 500);
   glutInitWindowSize(800, 600);
-  glutCreateWindow("Color Changer Game - Use Arrow Keys"); // title 
+  glutCreateWindow("Color Changer Game - Use Arrows Keys"); // title 
 
   glutDisplayFunc(OnDisplay);
   glutSpecialFunc(OnSpecialKeyPress);
@@ -150,15 +150,14 @@ void OnDisplay()
 
   // Display color name (large and centered)
   glColor3f(0, 0, 0);
-  float textWidth = strlen(colors[currentColorIndex].name) * 5;
-  DrawText(-textWidth, 60, colors[currentColorIndex].name);
+  DrawText(-5, 60, colors[currentColorIndex].name);
 
   // Display instructions
   glColor3f(0, 0, 0);
   DrawText(-80, -80, "Arrow Keys: Change Color");
   DrawText(-80, -90, "UP/DOWN: Next/Previous");
 
-  glutSwapBuffers();
+  glFlush();
 }
 
 void DrawText(float x, float y, const char *text)
